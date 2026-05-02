@@ -80,22 +80,22 @@ export async function listMaveoThings(
   session: MaveoSession,
   options?: ListMaveoThingsOptions,
 ): Promise<MaveoThingSummary[]> {
+  const cap = options?.maxThings;
+  if (cap !== undefined && cap <= 0) return [];
+
   const client = iotClientForSession(session);
   const out: MaveoThingSummary[] = [];
   let nextToken: string | undefined;
-  const cap = options?.maxThings;
   do {
     const page = await client.send(new ListThingsCommand({ nextToken, maxResults: 100 }));
     for (const t of page.things ?? []) {
       const name = t.thingName;
       if (!name) continue;
+      if (cap !== undefined && out.length >= cap) return out;
       out.push({
         thingName: name,
         attributes: { ...(t.attributes as Record<string, string> | undefined) },
       });
-      if (cap !== undefined && out.length >= cap) {
-        return out;
-      }
     }
     nextToken = page.nextToken;
   } while (nextToken);

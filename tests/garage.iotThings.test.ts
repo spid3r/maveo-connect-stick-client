@@ -104,6 +104,24 @@ describe("listMaveoThings (account-wide iot:ListThings, advanced use)", () => {
     expect(sendSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("returns an empty array immediately when maxThings is 0 (no SDK call)", async () => {
+    const result = await listMaveoThings(session, { maxThings: 0 });
+    expect(result).toEqual([]);
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns exactly maxThings items, not maxThings + 1, when the cap is hit mid-page", async () => {
+    sendSpy.mockImplementation(async () => ({
+      things: [
+        { thingName: "a", attributes: {} },
+        { thingName: "b", attributes: {} },
+        { thingName: "c", attributes: {} },
+      ],
+    }));
+    const result = await listMaveoThings(session, { maxThings: 2 });
+    expect(result.map((t) => t.thingName)).toEqual(["a", "b"]);
+  });
+
   it("paginates fully when no cap is given", async () => {
     sendSpy.mockImplementation(async (cmd: unknown) => {
       const input = (cmd as ListThingsCommand).input;
