@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/spid3r/maveo-connect-stick-client/compare/v1.0.0...v1.0.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **garage:** respect maxThings cap before pushing items in listMaveoThings ([f26598c](https://github.com/spid3r/maveo-connect-stick-client/commit/f26598cae5879a1520a62832ba779ec0da3b1e7e))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
