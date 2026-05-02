@@ -50,7 +50,38 @@ jobs:
       - name: Build
         run: npm run build
 
+      # ---------------------------------------------------------------------------
+      # Publish gate.
+      #
+      # The CI build above (typecheck / unit tests / build) ALWAYS runs on every
+      # push to main / beta. The actual semantic-release publish step is gated:
+      #
+      #   * Until you have done your first publish manually with `npm run
+      #     release:local` AND configured npm Trusted Publishing on npmjs.com,
+      #     leave the repo variable `NPM_PUBLISHING_ENABLED` unset (or != "true").
+      #     The workflow then stops here with a friendly notice — green CI, no
+      #     accidental failed publishes.
+      #
+      #   * Once the package exists on npmjs.com and Trusted Publishing is wired
+      #     up for this repo + workflow, set the variable:
+      #         gh variable set NPM_PUBLISHING_ENABLED --body "true"
+      #     From then on every push to main / beta will publish via OIDC
+      #     (no long-lived NPM_TOKEN required).
+      #
+      #   * Fallback: if you ever need to publish without Trusted Publishing,
+      #     also set the `NPM_TOKEN` repo secret. semantic-release will use it
+      #     when OIDC is unavailable.
+      # ---------------------------------------------------------------------------
+      - name: Publish gate (skip until npm publishing is enabled)
+        if: ${{ vars.NPM_PUBLISHING_ENABLED != 'true' }}
+        run: |
+          echo "::notice title=Release skipped::NPM_PUBLISHING_ENABLED is not 'true'."
+          echo "Run \`npm run release:local\` for the first publish, configure npm"
+          echo "Trusted Publishing for this repo + workflow, then set the repo"
+          echo "variable: gh variable set NPM_PUBLISHING_ENABLED --body \"true\""
+
       - name: Install semantic-release (not root devDependencies)
+        if: ${{ vars.NPM_PUBLISHING_ENABLED == 'true' }}
         run: |
           npm install --no-save \
             semantic-release@25 \
@@ -60,6 +91,7 @@ jobs:
             @semantic-release/github@12
 
       - name: Semantic release
+        if: ${{ vars.NPM_PUBLISHING_ENABLED == 'true' }}
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
