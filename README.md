@@ -87,7 +87,7 @@ Everything under **`dependencies`** in `package.json` is referenced from `src/`:
 |---------|------|
 | `@aws-sdk/client-cognito-identity-provider` | `InitiateAuth` (email/password) |
 | `@aws-sdk/client-cognito-identity` | `GetId` / `GetCredentialsForIdentity` |
-| `@aws-sdk/client-iot` | `ListThings` / `DescribeThing` (garage helpers) |
+| `@aws-sdk/client-iot` | `ListPrincipalThings` / `DescribeThing` (own-stick discovery + metadata) |
 | `@smithy/signature-v4`, `@smithy/protocol-http`, `@aws-crypto/sha256-js` | SigV4 signing for the MQTT WSS upgrade |
 | `mqtt` | MQTT v5 over WebSocket |
 | `zod` | Env schema in `src/config/env.ts` and auth config |
@@ -113,14 +113,17 @@ flowchart LR
 
 ```bash
 cd C:\Github\maveo-connect-stick-client
-npm install
+npm ci
+npm run prepare   # one-time: sets up Husky git hooks (skipped by .npmrc ignore-scripts)
 npm test
 npm run build
 ```
 
+**Why the explicit `npm run prepare`?** This repo ships an [`.npmrc`](.npmrc) with **`ignore-scripts=true`** to defend against supply-chain attacks via dependency install scripts (e.g. malicious `postinstall`). That same flag also blocks our own root `prepare` script (which installs Husky's git hooks), so contributors run it once after a fresh `npm ci`. CI does not need git hooks (`HUSKY=0` in workflows) and is unaffected.
+
 **No vendor defaults.** This library deliberately does **not** ship Cognito client / pool ids, regions, or IoT hostnames. Set **all four** of `MAVEO_COGNITO_CLIENT_ID`, `MAVEO_COGNITO_IDENTITY_POOL_ID`, `MAVEO_REGION`, and `MAVEO_IOT_HOSTNAME` from your **own** copy of the official mobile app's `awsconfiguration.json` (see [docs/AUTH_FLOW.md](docs/AUTH_FLOW.md)). If login fails with `UserNotFoundException`, you have the wrong stack — re-verify those four values. If you maintain notes on multiple stacks, drop them in a local `cognito-stacks.local.json` (gitignored) and run **`npm run cli -- cognito`** to probe which one accepts your password.
 
-**Garage / stick metadata (no MQTT required):** after login, `listMaveoThings` and `describeMaveoThing` use AWS IoT **control plane** APIs (`iot:ListThings` / `iot:DescribeThing`). Set `MAVEO_THING_NAME` to your stick serial from the Maveo app, then run **`npm run cli -- garage`** (builds first).
+**Discover the user's own Connect Sticks (no MQTT required):** after login, **`listMaveoConnectSticks(session)`** returns the array of stick serials attached to the calling Cognito identity (uses **`iot:ListPrincipalThings`**). This is the right call for plugin/UI flows like *"let the user pick which stick to control"* (e.g. LoxBerry's device picker). For per-stick metadata, follow up with **`describeMaveoThing(session, serial)`**. End-to-end demo: **`npm run cli -- garage`** (builds first; logs in, prints your sticks, describes the first one). The legacy **`listMaveoThings(session)`** uses account-wide `iot:ListThings` and is kept exported for advanced/diagnostic use; prefer the identity-scoped helper for end-user flows.
 
 **MQTT over WSS** uses **header-based SigV4** with service **`iotdata`** and **`wss://…:443/mqtt`** (official app wire format — not `iotdevicegateway` query presign). The MQTT client uses **protocol version 5** by default. **MQTT `clientId`:** Marantec’s broker expects the **Connect Stick serial** (same value as **`MAVEO_THING_NAME`** / app display). Set **`MAVEO_THING_NAME`** or **`MAVEO_MQTT_CLIENT_ID`** to that serial; using the Cognito **identity id** alone typically yields CONNACK **“Not authorized”**. **Smoke-test MQTT** (full CONNECT + CONNACK): `MAVEO_LIVE_TEST=1`, `MAVEO_RUN_LIVE_MQTT=1`, stick serial in env, then `npx vitest run tests/live.iot.test.ts -t "connects and disconnects"`. **Listen** on `…/rsp` and print JSON: **`npm run cli -- listen`** (optional `MAVEO_LISTEN_MS`, `MAVEO_RUN_OPEN=1` is dangerous). **Guided live scenario** (open → dwell → stop → light → close): set `MAVEO_LIVE_TEST=1`, `MAVEO_RUN_LIVE_MQTT=1`, stick serial, and **`MAVEO_RUN_BLUEFI_SCENARIO=1`** (see `.env.example`). Run **`npm test`** or **`npm run bluefi:scenario`**. **Passive listen** (no SDK door commands; you use the handheld): add **`MAVEO_LIVE_BLUEFI_PASSIVE=1`** and run **`npm run bluefi:passive`**. **`MAVEO_LIVE_BLUEFI_START_DELAY_MS`** (e.g. `20000`) adds a one-time pause at the start of each BlueFi live test so you can reach the garage before anything moves. Live `mqtt.connect` test uses the same base flags.
 

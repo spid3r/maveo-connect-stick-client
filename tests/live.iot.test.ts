@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { loadMaveoLibraryConfigFromEnv } from "../src/config/env.js";
 import { MaveoCognitoAuthClient } from "../src/auth/maveoCognitoAuthClient.js";
-import { listMaveoThings } from "../src/garage/maveoIotThings.js";
+import { listMaveoConnectSticks } from "../src/garage/maveoIotThings.js";
 import { MaveoMqttIotClient } from "../src/iot/maveoMqttIotClient.js";
 
 const poolOk = Boolean(process.env.MAVEO_COGNITO_IDENTITY_POOL_ID?.trim());
@@ -58,14 +58,18 @@ describe.runIf(mqttLive)("live: MQTT over WSS (optional)", () => {
 
 const garageLive = authLive && process.env.MAVEO_LIVE_GARAGE === "1";
 
-describe.runIf(garageLive)("live: garage (IoT ListThings)", () => {
+describe.runIf(garageLive)("live: garage (iot:ListPrincipalThings)", () => {
   it(
-    "lists at least one thing",
+    "lists at least one Connect Stick attached to this identity",
     async () => {
       const cfg = loadMaveoLibraryConfigFromEnv();
       const session = await authFromEnv().loginWithPassword(cfg.email, cfg.password);
-      const things = await listMaveoThings(session, { maxThings: 3 });
-      expect(things.length).toBeGreaterThan(0);
+      const sticks = await listMaveoConnectSticks(session);
+      expect(sticks.length).toBeGreaterThan(0);
+      for (const s of sticks) {
+        expect(typeof s).toBe("string");
+        expect(s.length).toBeGreaterThan(0);
+      }
     },
     30_000,
   );

@@ -14,6 +14,7 @@ const mode = process.argv[2];
 if (mode === "garage") {
   const {
     describeMaveoThing,
+    listMaveoConnectSticks,
     listMaveoThings,
     loadMaveoLibraryConfigFromEnv,
     MaveoCognitoAuthClient,
@@ -23,17 +24,28 @@ if (mode === "garage") {
   const auth = new MaveoCognitoAuthClient({ authConfig: cfg });
   const session = await auth.loginWithPassword(cfg.email, cfg.password);
   console.log("IoT endpoint:", session.iotHostname);
+  console.log("IdentityId:  ", session.identityId);
 
-  const preview = await listMaveoThings(session, { maxThings: 5 });
-  console.log("First things (max 5):", preview.map((t) => t.thingName).join(", "));
-  const pick = process.env.MAVEO_THING_NAME?.trim() || preview[0]?.thingName;
+  const owned = await listMaveoConnectSticks(session);
+  console.log(
+    `\nYour Connect Sticks (iot:ListPrincipalThings, scoped to your identity): ${owned.length === 0 ? "(none)" : owned.join(", ")}`,
+  );
+
+  if (process.argv.slice(3).includes("--account-wide")) {
+    const preview = await listMaveoThings(session, { maxThings: 5 });
+    console.log(
+      `\n[advanced] iot:ListThings(maxResults=5): ${preview.map((t) => t.thingName).join(", ")}`,
+    );
+  }
+
+  const pick = process.env.MAVEO_THING_NAME?.trim() || owned[0];
   if (!pick) {
     console.error(
-      "Set MAVEO_THING_NAME to your Connect Stick serial (see Maveo app) or ensure ListThings returns data.",
+      "\nNo Connect Stick attached to this Cognito identity. Pair a stick in the official Maveo app first, then re-run.",
     );
     process.exit(1);
   }
-  console.log("DescribeThing:", pick);
+  console.log(`\nDescribeThing: ${pick}`);
   const detail = await describeMaveoThing(session, pick);
   console.log(JSON.stringify(detail, null, 2));
   process.exit(0);

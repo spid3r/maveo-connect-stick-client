@@ -1,4 +1,9 @@
-import { DescribeThingCommand, IoTClient, ListThingsCommand } from "@aws-sdk/client-iot";
+import {
+  DescribeThingCommand,
+  IoTClient,
+  ListPrincipalThingsCommand,
+  ListThingsCommand,
+} from "@aws-sdk/client-iot";
 import type { MaveoSession } from "../auth/types.js";
 
 export type MaveoThingSummary = {
@@ -15,23 +20,67 @@ function sessionCredentials(session: MaveoSession) {
   };
 }
 
+function iotClientForSession(session: MaveoSession): IoTClient {
+  return new IoTClient({
+    region: session.region,
+    credentials: sessionCredentials(session),
+  });
+}
+
+/**
+ * Returns the Connect Stick serials (= AWS IoT thing names) that are **attached
+ * to the current Cognito identity** — i.e. the sticks this user actually owns.
+ *
+ * Uses `iot:ListPrincipalThings` with the session's `identityId` as the principal,
+ * which keeps the result scoped to the calling user. This is the right call to
+ * power UI like a LoxBerry / Home Assistant "select your stick" dropdown.
+ *
+ * Pagination is followed transparently. In practice the result is 1–N items,
+ * where N is the number of sticks the user has registered in the official app.
+ */
+export async function listMaveoConnectSticks(session: MaveoSession): Promise<string[]> {
+  const client = iotClientForSession(session);
+  const out: string[] = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await client.send(
+      new ListPrincipalThingsCommand({
+        principal: session.identityId,
+        maxResults: 100,
+        nextToken,
+      }),
+    );
+    for (const name of page.things ?? []) {
+      if (typeof name === "string" && name.length > 0) out.push(name);
+    }
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return out;
+}
+
 export type ListMaveoThingsOptions = {
   /** Stop after N things (useful when the account lists many devices). */
   maxThings?: number;
 };
 
 /**
- * List IoT things visible to this Cognito session.
- * On shared infrastructure this can return **many** rows — prefer {@link describeMaveoThing} when you know the stick serial (`thingName`).
+ * Calls account-wide `iot:ListThings` with the federated Cognito credentials and
+ * returns each thing's name plus its AWS thing attributes. Pagination is followed
+ * transparently (capped via `maxThings`).
+ *
+ * Whether the result is meaningful for *"show me my devices"* depends entirely on
+ * how the upstream IoT account scopes `iot:ListThings` for the calling identity:
+ * with a tight resource constraint you get just your own things; without one, the
+ * call returns an unbounded slice of the whole AWS account. For end-user UIs
+ * (plugins, dashboards, dropdowns) prefer {@link listMaveoConnectSticks}, which
+ * uses `iot:ListPrincipalThings` with the Cognito identity as principal and is
+ * therefore reliably scoped to the calling user's own sticks.
  */
 export async function listMaveoThings(
   session: MaveoSession,
   options?: ListMaveoThingsOptions,
 ): Promise<MaveoThingSummary[]> {
-  const client = new IoTClient({
-    region: session.region,
-    credentials: sessionCredentials(session),
-  });
+  const client = iotClientForSession(session);
   const out: MaveoThingSummary[] = [];
   let nextToken: string | undefined;
   const cap = options?.maxThings;
@@ -55,16 +104,14 @@ export async function listMaveoThings(
 
 /**
  * Full **DescribeThing** payload (name, id, ARN, attributes, type, billing group, etc.).
- * This is the reliable way to read stick metadata with the same credentials as {@link listMaveoThings}.
+ * Pair with {@link listMaveoConnectSticks} so you only describe serials that belong
+ * to the calling identity.
  */
 export async function describeMaveoThing(
   session: MaveoSession,
   thingName: string,
 ): Promise<Record<string, unknown>> {
-  const client = new IoTClient({
-    region: session.region,
-    credentials: sessionCredentials(session),
-  });
+  const client = iotClientForSession(session);
   const out = await client.send(new DescribeThingCommand({ thingName }));
   return { ...out } as Record<string, unknown>;
 }

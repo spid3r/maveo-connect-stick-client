@@ -59,7 +59,11 @@ export type { MaveoStickStateUpdate } from "./iot/maveoBlueFiState.js";
 export { waitForBlueFiRspObject } from "./iot/waitForBlueFiRsp.js";
 export type { MqttMessageSubscriber, WaitForBlueFiRspWatchOptions } from "./iot/waitForBlueFiRsp.js";
 
-export { describeMaveoThing, listMaveoThings } from "./garage/maveoIotThings.js";
+export {
+  describeMaveoThing,
+  listMaveoConnectSticks,
+  listMaveoThings,
+} from "./garage/maveoIotThings.js";
 export type { ListMaveoThingsOptions, MaveoThingSummary } from "./garage/maveoIotThings.js";
 export { parseMaveoEnvBoolean } from "./config/envBoolean.js";
 export { resolveMaveoStickSerialFromEnv, tryResolveMaveoStickSerialFromEnv } from "./config/stickSerial.js";

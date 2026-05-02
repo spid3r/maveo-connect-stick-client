@@ -20,9 +20,10 @@ const passThrough = process.argv.slice(3);
 function usage() {
   console.error(`Usage: npm run cli -- <command> [...args]
 
-  cognito   Try USER_PASSWORD_AUTH against stacks listed in cognito-stacks.local.json
-  garage    ListThings + DescribeThing JSON (needs build + .env)
-  listen    MQTT subscribe to <stickId>/rsp, print JSON lines (needs build + .env)`);
+  cognito                  Try USER_PASSWORD_AUTH against stacks listed in cognito-stacks.local.json
+  garage [--account-wide]  ListPrincipalThings (your sticks) + DescribeThing JSON;
+                           --account-wide also runs iot:ListThings for comparison
+  listen                   MQTT subscribe to <stickId>/rsp, print JSON lines (needs build + .env)`);
 }
 
 function exitSpawn(r) {
