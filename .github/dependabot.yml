@@ -1,4 +1,9 @@
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot-y-file
+#
+# commit-message: keeps Dependabot PR commits compliant with our commitlint
+# config (Conventional Commits, subject in lower case). Without this, the
+# default "build(deps): Bump xxx from A to B" subject violates our
+# subject-case rule (sentence-case is forbidden) and the PR's CI fails.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -6,6 +11,9 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
     groups:
       actions:
         patterns:
@@ -16,6 +24,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 8
+    commit-message:
+      prefix: "build"
+      prefix-development: "build"
+      include: "scope"
     groups:
       development-dependencies:
         dependency-type: development
