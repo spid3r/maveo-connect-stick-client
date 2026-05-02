@@ -1,0 +1,74 @@
+{
+  "name": "maveo-connect-stick-client",
+  "version": "0.0.0",
+  "description": "Standalone, test-driven TypeScript client for Maveo Connect Stick (auth + MQTT over WebSocket to Marantec IoT).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.12.0"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "prepublishOnly": "npm run build",
+    "build": "tsc -p tsconfig.build.json",
+    "release:dry-run": "npm install --no-save semantic-release@25 @semantic-release/changelog@6 @semantic-release/git@10 @semantic-release/npm@13 @semantic-release/github@12 && npx semantic-release --dry-run",
+    "cli": "node scripts/cli.mjs",
+    "bluefi:scenario": "vitest run tests/live.bluefi.test.ts -t \"guided scenario\"",
+    "bluefi:passive": "vitest run tests/live.bluefi.test.ts -t \"BlueFi passive\"",
+    "test": "vitest run",
+    "test:unit": "vitest run --exclude \"**/live.*.test.ts\"",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "maveo",
+    "marantec",
+    "mqtt",
+    "iot"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spid3r/maveo-connect-stick-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/spid3r/maveo-connect-stick-client/issues"
+  },
+  "homepage": "https://github.com/spid3r/maveo-connect-stick-client#readme",
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/client-cognito-identity": "^3.1019.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1019.0",
+    "@aws-sdk/client-iot": "^3.1019.0",
+    "@smithy/protocol-http": "^5.3.12",
+    "@smithy/signature-v4": "^5.3.12",
+    "mqtt": "^5.15.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.2",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@types/node": "^25.5.0",
+    "dotenv": "^17.3.1",
+    "husky": "^9.1.7",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

@@ -1,0 +1,66 @@
+# semantic-release: main → npm latest + GitHub Release; beta → prerelease + npm dist-tag beta.
+# Prefer npm Trusted Publishing (OIDC). Optional NPM_TOKEN repo secret while migrating.
+name: Release
+
+on:
+  push:
+    branches: [main, beta]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.ref_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.14"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: npm ≥ 11.5.1 (trusted publishing / OIDC)
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: "0"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests (excludes live.*)
+        run: npm run test:unit
+
+      - name: Build
+        run: npm run build
+
+      - name: Install semantic-release (not root devDependencies)
+        run: |
+          npm install --no-save \
+            semantic-release@25 \
+            @semantic-release/changelog@6 \
+            @semantic-release/git@10 \
+            @semantic-release/npm@13 \
+            @semantic-release/github@12
+
+      - name: Semantic release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

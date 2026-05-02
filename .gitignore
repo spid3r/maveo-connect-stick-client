@@ -1,0 +1,33 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Local secrets and discovered vendor configuration — NEVER commit any of these.
+# This library deliberately ships no vendor defaults; every consumer (including
+# the maintainer running tests locally) supplies their own values via these files.
+# ---------------------------------------------------------------------------
+
+# .env: MAVEO_EMAIL / MAVEO_PASSWORD / MAVEO_COGNITO_CLIENT_ID /
+# MAVEO_COGNITO_IDENTITY_POOL_ID / MAVEO_REGION / MAVEO_IOT_HOSTNAME / MAVEO_THING_NAME
+# (see .env.example for the full list)
+.env
+.env.local
+.env.*.local
+
+# Multi-stack reference for `npm run cli -- cognito` (array of { name, region, clientId }).
+# Discovered from your own copy of the official app's awsconfiguration.json (docs/AUTH_FLOW.md).
+*.local.json
+
+# Network sniffing / reverse-engineering captures — were used during initial protocol discovery,
+# never needed at runtime. Keeping the rule defends against accidentally committing tcpdump / mitmproxy
+# exports that contain Authorization or x-amz-security-token headers.
+sniffed_network_calls/
+*.har
+*.pcap
+*.pcapng

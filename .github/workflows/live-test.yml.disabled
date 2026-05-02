@@ -1,0 +1,87 @@
+# =============================================================================
+# OPT-IN LIVE INTEGRATION TEST — DISABLED BY DEFAULT
+# -----------------------------------------------------------------------------
+# This file is named `live-test.yml.disabled` so GitHub Actions ignores it.
+# Rename to `live-test.yml` (drop `.disabled`) only after you have:
+#
+#   1. Read every warning below.
+#   2. Added the required GitHub Actions secrets (Settings -> Secrets and
+#      variables -> Actions -> New repository secret) listed under `env:`.
+#   3. Decided you accept the trade-offs (see warnings).
+#
+# Why disabled by default?
+#
+#   * Live runs use real Cognito + AWS IoT against your own account. They
+#     consume the **same MQTT clientId** as the official Maveo / Marantec app
+#     (the Connect Stick serial). The broker only allows ONE session per
+#     clientId, so every CI run will **kick the official app off MQTT** for the
+#     stick configured via MAVEO_THING_NAME for as long as the test runs.
+#   * The default trigger is `workflow_dispatch` (manual button only). Add
+#     `schedule` only if you understand the kick effect above.
+#   * This workflow does NOT move the door (no `MAVEO_LIVE_BLUEFI_DOOR=1`).
+#     Door movement remains strictly local and opt-in via .env, never CI.
+#   * Pull requests from forks do not get repository secrets, so the job will
+#     skip cleanly there.
+#
+# Required GitHub Actions secrets (add at Settings -> Secrets -> Actions):
+#   MAVEO_EMAIL                       Your account email
+#   MAVEO_PASSWORD                    Your account password
+#   MAVEO_COGNITO_CLIENT_ID           From your own awsconfiguration.json
+#   MAVEO_COGNITO_IDENTITY_POOL_ID    From your own awsconfiguration.json
+#   MAVEO_REGION                      AWS region matching the two above
+#   MAVEO_IOT_HOSTNAME                Fully-qualified IoT broker hostname
+#   MAVEO_THING_NAME                  Your Connect Stick serial (kicks the app)
+# =============================================================================
+
+name: Live test (opt-in)
+
+on:
+  workflow_dispatch: {}
+  # Uncomment to also run on a schedule. Each run kicks the official app off MQTT.
+  # schedule:
+  #   - cron: "0 6 * * 1" # weekly Monday 06:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-test-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    # Skip cleanly if secrets are missing (e.g. fork PRs).
+    if: ${{ secrets.MAVEO_EMAIL != '' && secrets.MAVEO_THING_NAME != '' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: "0"
+
+      - name: Build
+        run: npm run build
+
+      - name: Live MQTT smoke (login + connect + disconnect — NO door movement)
+        run: npx vitest run tests/live.iot.test.ts -t "connects and disconnects"
+        env:
+          # Required for live test gating
+          MAVEO_LIVE_TEST: "1"
+          MAVEO_RUN_LIVE_MQTT: "1"
+          # Library config (from repository secrets)
+          MAVEO_EMAIL: ${{ secrets.MAVEO_EMAIL }}
+          MAVEO_PASSWORD: ${{ secrets.MAVEO_PASSWORD }}
+          MAVEO_COGNITO_CLIENT_ID: ${{ secrets.MAVEO_COGNITO_CLIENT_ID }}
+          MAVEO_COGNITO_IDENTITY_POOL_ID: ${{ secrets.MAVEO_COGNITO_IDENTITY_POOL_ID }}
+          MAVEO_REGION: ${{ secrets.MAVEO_REGION }}
+          MAVEO_IOT_HOSTNAME: ${{ secrets.MAVEO_IOT_HOSTNAME }}
+          MAVEO_THING_NAME: ${{ secrets.MAVEO_THING_NAME }}
