@@ -33,7 +33,7 @@ Implementation: `src/iot/maveoBlueFiMqttProtocol.ts`, `MaveoMqttIotClient`, `Mav
 | `src/config/mqttSessionEnv.ts` | Optional env for reclaim + session contention (`mergeAutomaticMqttReclaimOptionsFromEnv`). |
 | `src/auth/*` | Cognito login → `MaveoSession`. |
 | `src/iot/*` | WSS + MQTT: connect, subscribe, publish. |
-| `src/garage/maveoIotThings.ts` | `ListThings` / `DescribeThing` (control plane, no MQTT). |
+| `src/garage/maveoIotThings.ts` | `ListPrincipalThings` (own-stick discovery), `DescribeThing`, plus account-wide `ListThings` for advanced use (control plane, no MQTT). |
 | `src/client/maveoConnectStickClient.ts` | Facade: login + MQTT + BlueFi helpers, auto-reclaim, lifecycle events. |
 
 ## Tests

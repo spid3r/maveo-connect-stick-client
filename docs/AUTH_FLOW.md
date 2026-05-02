@@ -77,4 +77,8 @@ in a local `cognito-stacks.local.json` next to this repo (gitignored) and use
 
 ## Garage / stick without MQTT
 
-`iot:ListThings` and `iot:DescribeThing` work with typical Cognito authenticated roles. **Device Shadow** (`GetThingShadow`) and **MQTT WSS** may return **403** depending on the IAM policy bound to your identity, so live door state may require further investigation.
+To discover **only the user's own** Connect Sticks, call **`iot:ListPrincipalThings(principal=<cognitoIdentityId>)`** — wrapped by `listMaveoConnectSticks(session)`. This is identity-scoped and returns 0–N stick serials belonging to the caller. Per-stick metadata (ARN, attributes, `thingId`) is then available via `iot:DescribeThing` (`describeMaveoThing`).
+
+The library also exposes `listMaveoThings(session)` which calls account-wide `iot:ListThings`; the result depends on the IAM scope the IoT account grants to authenticated Cognito identities. Prefer `listMaveoConnectSticks` for end-user UIs.
+
+**MQTT WSS** and per-thing operations rely on the published `iot:Connect` / `iot:Publish` / `iot:Subscribe` policy bound to the Cognito identity. Connecting with a thing name that is not attached to the calling identity returns CONNACK *Not authorized*.

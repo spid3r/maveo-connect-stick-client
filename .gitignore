@@ -31,3 +31,7 @@ sniffed_network_calls/
 *.har
 *.pcap
 *.pcapng
+
+# Local scratch space: drafts, exploration scripts, notes that should never reach the public repo
+# (e.g. responsible-disclosure correspondence drafts, one-off probe scripts, throwaway analysis).
+tmp/
