@@ -1,14 +1,15 @@
-# Stable releases on `main` only: semver, CHANGELOG, npm `latest`, GitHub Release.
+# Pre-releases on `beta`: semantic-release pre-release branch (see .releaserc.json).
 #
-# Pre-releases on `beta` → see workflow `beta-release.yml` (semantic-release
-# pre-release branch; preview versions like 1.2.0-beta.1 while stable is 1.1.0).
+# Topic branches (fix/*, feature/*) merge to `beta` via PR; only `beta` publishes
+# npm pre-releases with dist-tag `beta`. Version is a **preview** of the upcoming
+# stable line (e.g. 1.2.0-beta.1 while stable is 1.1.0 after a feat: on beta).
 #
-# Prefer npm Trusted Publishing (OIDC). Optional NPM_TOKEN repo secret while migrating.
-name: Release
+# Register this workflow filename on npmjs Trusted Publishing alongside release.yml.
+name: Beta release
 
 on:
   push:
-    branches: [main]
+    branches: [beta]
 
 permissions:
   contents: read
@@ -17,7 +18,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     concurrency:
-      group: semantic-release-main
+      group: semantic-release-beta
       cancel-in-progress: false
     permissions:
       contents: write
@@ -57,8 +58,8 @@ jobs:
       - name: Publish gate (skip until npm publishing is enabled)
         if: ${{ vars.NPM_PUBLISHING_ENABLED != 'true' }}
         run: |
-          echo "::notice title=Release skipped::NPM_PUBLISHING_ENABLED is not 'true'."
-          echo "Configure npm Trusted Publishing for this repo + workflow, then:"
+          echo "::notice title=Beta release skipped::NPM_PUBLISHING_ENABLED is not 'true'."
+          echo "Configure npm Trusted Publishing for beta-release.yml, then:"
           echo "  gh variable set NPM_PUBLISHING_ENABLED --body \"true\""
 
       - name: Install semantic-release (not root devDependencies)
@@ -71,7 +72,7 @@ jobs:
             @semantic-release/npm@13 \
             @semantic-release/github@12
 
-      - name: Semantic release (stable → npm latest)
+      - name: Semantic release (pre-release → npm dist-tag beta)
         if: ${{ vars.NPM_PUBLISHING_ENABLED == 'true' }}
         run: npx semantic-release
         env:

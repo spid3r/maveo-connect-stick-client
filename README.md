@@ -5,6 +5,8 @@
 # maveo-connect-stick-client
 
 [![CI](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/ci.yml/badge.svg)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/ci.yml)
+[![Release](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml/badge.svg)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml)
+[![Beta release](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/beta-release.yml/badge.svg)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/beta-release.yml)
 [![npm](https://img.shields.io/npm/v/maveo-connect-stick-client.svg)](https://www.npmjs.com/package/maveo-connect-stick-client)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/node/v/maveo-connect-stick-client)](package.json)
@@ -37,9 +39,29 @@ Requires **Node.js ≥ 18.12** (see `engines` in [`package.json`](package.json))
 ## Contributing and releases
 
 - **Conventional Commits** are required (enforced in CI with [commitlint](https://commitlint.js.org/) and PR title lint for squash workflows). Example: `feat(mqtt): add reconnect helper`.
-- **Releases** are automated with [semantic-release](https://github.com/semantic-release/semantic-release): pushes to **`main`** publish stable versions to npm **`latest`** and create GitHub Releases; pushes to **`beta`** publish prereleases (e.g. `x.y.z-beta.n`) to npm with the **`beta`** dist-tag.
-- **Dry run locally:** `npm run release:dry-run` (installs semantic-release tooling temporarily; does not publish).
-- **Publishing to npm** uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC) from [`.github/workflows/release.yml`](.github/workflows/release.yml) when configured on npmjs; an optional `NPM_TOKEN` repository secret is only a migration fallback — **never** commit tokens or Maveo account secrets.
+- **Branch flow** (same model as [loxberry-api-abfall-io](https://github.com/spid3r/loxberry-api-abfall-io)):
+  - **`fix/*` / `feature/*` → `beta`** (PR): integration and pre-release testing.
+  - **Push to `beta`** → [`.github/workflows/beta-release.yml`](.github/workflows/beta-release.yml): semantic-release publishes a **preview** pre-release **`{nextStable}-beta.N`** to npm with dist-tag **`beta`** (e.g. `1.2.0-beta.1` while stable on npm is `1.1.0` — the beta number tells you what the next stable semver will be).
+  - **`beta` → `main`** (PR): when ready, merge to ship stable; push to **`main`** → [`.github/workflows/release.yml`](.github/workflows/release.yml): stable release to npm **`latest`** + GitHub Release.
+- **Pre-release SemVer:** A preview like `1.2.0-beta.1` is **newer** than installed stable `1.1.0` (`npm install maveo-connect-stick-client@beta`). Same-line betas (e.g. `1.1.0-beta.2` when stable is already `1.1.0`) are **older** than stable — use `@beta` only while testing the upcoming line.
+- **Configuration:** [`.releaserc.json`](.releaserc.json) defines **`main`** (stable) and **`beta`** (`prerelease: true`). No custom release scripts — semantic-release owns versioning on both branches.
+- **Dry run locally:** `npm run release:dry-run` (current branch) or `npm run release:beta:dry-run` (simulate beta pre-release only). Installs semantic-release tooling temporarily; does not publish.
+- **Publishing to npm** uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC). Register **both** workflow filenames on npmjs: `release.yml` (stable) and `beta-release.yml` (pre-releases). Optional `NPM_TOKEN` repository secret is only a migration fallback — **never** commit tokens or Maveo account secrets.
+
+```mermaid
+flowchart LR
+  subgraph topic [Topic branches]
+    F[fix/*]
+    FE[feature/*]
+  end
+  B[beta]
+  M[main]
+  F -->|PR| B
+  FE -->|PR| B
+  B -->|beta-release.yml| NPMb["npm @beta"]
+  B -->|PR promote| M
+  M -->|release.yml| NPMl["npm latest"]
+```
 
 ## Secrets and local configuration
 

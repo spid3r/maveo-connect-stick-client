@@ -29,6 +29,7 @@
     "prepublishOnly": "npm run build",
     "build": "tsc -p tsconfig.build.json",
     "release:dry-run": "npm install --no-save semantic-release@25 @semantic-release/changelog@6 @semantic-release/git@10 @semantic-release/npm@13 @semantic-release/github@12 && npx semantic-release --dry-run",
+    "release:beta:dry-run": "npm install --no-save semantic-release@25 @semantic-release/changelog@6 @semantic-release/git@10 @semantic-release/npm@13 @semantic-release/github@12 && npx semantic-release --dry-run --branches beta",
     "release:local": "npm run build && npm install --no-save semantic-release@25 @semantic-release/changelog@6 @semantic-release/git@10 @semantic-release/npm@13 @semantic-release/github@12 && npx semantic-release --no-ci",
     "cli": "node scripts/cli.mjs",
     "bluefi:scenario": "vitest run tests/live.bluefi.test.ts -t \"guided scenario\"",
