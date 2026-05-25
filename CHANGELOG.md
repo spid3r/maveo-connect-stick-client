@@ -1,3 +1,10 @@
+# [1.2.0-beta.1](https://github.com/spid3r/maveo-connect-stick-client/compare/v1.1.0...v1.2.0-beta.1) (2026-05-25)
+
+
+### Features
+
+* **readme:** add npm [@beta](https://github.com/beta) install instructions for pre-release testers ([ce60e32](https://github.com/spid3r/maveo-connect-stick-client/commit/ce60e32da33ece8ad55d0fb314cee6d321ec5800))
+
 # [1.1.0](https://github.com/spid3r/maveo-connect-stick-client/compare/v1.0.1...v1.1.0) (2026-05-25)
 
 
