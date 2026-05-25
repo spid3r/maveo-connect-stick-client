@@ -34,6 +34,12 @@ This is **third-party open source** software (see the [MIT License](LICENSE)). I
 npm install maveo-connect-stick-client
 ```
 
+**Pre-release builds** (preview of the upcoming stable semver, e.g. `1.2.0-beta.1`):
+
+```bash
+npm install maveo-connect-stick-client@beta
+```
+
 Requires **Node.js ≥ 18.12** (see `engines` in [`package.json`](package.json)). Published builds ship compiled **`dist/`** only; develop from this repo with `npm ci` and `npm run build` if you link locally.
 
 ## Contributing and releases
