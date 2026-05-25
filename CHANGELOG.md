@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/spid3r/maveo-connect-stick-client/compare/v1.0.1...v1.1.0) (2026-05-25)
+
+
+### Features
+
+* **release:** promote beta to stable 1.1.0 ([e854aa4](https://github.com/spid3r/maveo-connect-stick-client/commit/e854aa4476145a15d2af97d098b6e94c300a7568))
+
 # [1.1.0-beta.1](https://github.com/spid3r/maveo-connect-stick-client/compare/v1.0.1...v1.1.0-beta.1) (2026-05-25)
 
 
