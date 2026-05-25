@@ -1,14 +1,15 @@
-# Stable releases on `main` only: semver, CHANGELOG, npm `latest`, GitHub Release.
+# semantic-release via a single workflow file (required by npm Trusted Publishing:
+# each package allows only ONE trusted publisher / workflow filename — see
+# https://docs.npmjs.com/trusted-publishers).
 #
-# Pre-releases on `beta` → see workflow `beta-release.yml` (semantic-release
-# pre-release branch; preview versions like 1.2.0-beta.1 while stable is 1.1.0).
-#
-# Prefer npm Trusted Publishing (OIDC). Optional NPM_TOKEN repo secret while migrating.
+# Branch behaviour (.releaserc.json):
+#   main → stable semver, npm dist-tag `latest`, GitHub Release
+#   beta → preview pre-release `{nextStable}-beta.N`, npm dist-tag `beta`
 name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta]
 
 permissions:
   contents: read
@@ -17,7 +18,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     concurrency:
-      group: semantic-release-main
+      group: semantic-release-${{ github.ref_name }}
       cancel-in-progress: false
     permissions:
       contents: write
@@ -58,7 +59,7 @@ jobs:
         if: ${{ vars.NPM_PUBLISHING_ENABLED != 'true' }}
         run: |
           echo "::notice title=Release skipped::NPM_PUBLISHING_ENABLED is not 'true'."
-          echo "Configure npm Trusted Publishing for this repo + workflow, then:"
+          echo "Configure npm Trusted Publishing (workflow filename: release.yml), then:"
           echo "  gh variable set NPM_PUBLISHING_ENABLED --body \"true\""
 
       - name: Install semantic-release (not root devDependencies)
@@ -71,7 +72,7 @@ jobs:
             @semantic-release/npm@13 \
             @semantic-release/github@12
 
-      - name: Semantic release (stable → npm latest)
+      - name: Semantic release
         if: ${{ vars.NPM_PUBLISHING_ENABLED == 'true' }}
         run: npx semantic-release
         env:

@@ -5,8 +5,8 @@
 # maveo-connect-stick-client
 
 [![CI](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/ci.yml/badge.svg)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/ci.yml)
-[![Release](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml/badge.svg)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml)
-[![Beta release](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/beta-release.yml/badge.svg)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/beta-release.yml)
+[![Release](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml)
+[![Beta release](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml/badge.svg?branch=beta)](https://github.com/spid3r/maveo-connect-stick-client/actions/workflows/release.yml)
 [![npm](https://img.shields.io/npm/v/maveo-connect-stick-client.svg)](https://www.npmjs.com/package/maveo-connect-stick-client)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/node/v/maveo-connect-stick-client)](package.json)
@@ -41,16 +41,12 @@ Requires **Node.js ≥ 18.12** (see `engines` in [`package.json`](package.json))
 - **Conventional Commits** are required (enforced in CI with [commitlint](https://commitlint.js.org/) and PR title lint for squash workflows). Example: `feat(mqtt): add reconnect helper`.
 - **Branch flow** (same model as [loxberry-api-abfall-io](https://github.com/spid3r/loxberry-api-abfall-io)):
   - **`fix/*` / `feature/*` → `beta`** (PR): integration and pre-release testing.
-  - **Push to `beta`** → [`.github/workflows/beta-release.yml`](.github/workflows/beta-release.yml): semantic-release publishes a **preview** pre-release **`{nextStable}-beta.N`** to npm with dist-tag **`beta`** (e.g. `1.2.0-beta.1` while stable on npm is `1.1.0` — the beta number tells you what the next stable semver will be).
-  - **`beta` → `main`** (PR): when ready, merge to ship stable; push to **`main`** → [`.github/workflows/release.yml`](.github/workflows/release.yml): stable release to npm **`latest`** + GitHub Release.
+  - **Push to `beta`** → [`.github/workflows/release.yml`](.github/workflows/release.yml) (same file as stable): semantic-release publishes a **preview** pre-release **`{nextStable}-beta.N`** to npm with dist-tag **`beta`** (e.g. `1.2.0-beta.1` while stable on npm is `1.1.0` — the beta number tells you what the next stable semver will be).
+  - **`beta` → `main`** (PR): when ready, merge to ship stable; push to **`main`** → same workflow: stable release to npm **`latest`** + GitHub Release.
 - **Pre-release SemVer:** A preview like `1.2.0-beta.1` is **newer** than installed stable `1.1.0` (`npm install maveo-connect-stick-client@beta`). Same-line betas (e.g. `1.1.0-beta.2` when stable is already `1.1.0`) are **older** than stable — use `@beta` only while testing the upcoming line.
 - **Configuration:** [`.releaserc.json`](.releaserc.json) defines **`main`** (stable) and **`beta`** (`prerelease: true`). No custom release scripts — semantic-release owns versioning on both branches.
 - **Dry run locally:** `npm run release:dry-run` (current branch) or `npm run release:beta:dry-run` (simulate beta pre-release only). Installs semantic-release tooling temporarily; does not publish.
-- **Publishing to npm** uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC). Register **both** workflow filenames on npmjs for package `maveo-connect-stick-client`:
-  - `release.yml` → stable (`latest`)
-  - `beta-release.yml` → pre-releases (`beta` dist-tag)
-  
-  npmjs → package → **Settings** → **Trusted Publisher** → add each workflow (GitHub Actions, org/user `spid3r`, repo `maveo-connect-stick-client`, environment empty). Do **not** set a repository `NPM_TOKEN` secret when using OIDC — a stale token makes semantic-release skip OIDC and fail auth.
+- **Publishing to npm** uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC). npm allows **only one trusted publisher per package** — register workflow filename **`release.yml`** only (not comma-separated, not a second entry). That single workflow runs on both **`main`** and **`beta`**; semantic-release picks stable vs pre-release from the branch. Do **not** set a repository `NPM_TOKEN` secret when using OIDC — a stale token makes semantic-release skip OIDC and fail auth.
 
 ```mermaid
 flowchart LR
@@ -62,7 +58,7 @@ flowchart LR
   M[main]
   F -->|PR| B
   FE -->|PR| B
-  B -->|beta-release.yml| NPMb["npm @beta"]
+  B -->|release.yml| NPMb["npm @beta"]
   B -->|PR promote| M
   M -->|release.yml| NPMl["npm latest"]
 ```
