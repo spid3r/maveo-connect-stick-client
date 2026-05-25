@@ -46,7 +46,11 @@ Requires **Node.js ≥ 18.12** (see `engines` in [`package.json`](package.json))
 - **Pre-release SemVer:** A preview like `1.2.0-beta.1` is **newer** than installed stable `1.1.0` (`npm install maveo-connect-stick-client@beta`). Same-line betas (e.g. `1.1.0-beta.2` when stable is already `1.1.0`) are **older** than stable — use `@beta` only while testing the upcoming line.
 - **Configuration:** [`.releaserc.json`](.releaserc.json) defines **`main`** (stable) and **`beta`** (`prerelease: true`). No custom release scripts — semantic-release owns versioning on both branches.
 - **Dry run locally:** `npm run release:dry-run` (current branch) or `npm run release:beta:dry-run` (simulate beta pre-release only). Installs semantic-release tooling temporarily; does not publish.
-- **Publishing to npm** uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC). Register **both** workflow filenames on npmjs: `release.yml` (stable) and `beta-release.yml` (pre-releases). Optional `NPM_TOKEN` repository secret is only a migration fallback — **never** commit tokens or Maveo account secrets.
+- **Publishing to npm** uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) (OIDC). Register **both** workflow filenames on npmjs for package `maveo-connect-stick-client`:
+  - `release.yml` → stable (`latest`)
+  - `beta-release.yml` → pre-releases (`beta` dist-tag)
+  
+  npmjs → package → **Settings** → **Trusted Publisher** → add each workflow (GitHub Actions, org/user `spid3r`, repo `maveo-connect-stick-client`, environment empty). Do **not** set a repository `NPM_TOKEN` secret when using OIDC — a stale token makes semantic-release skip OIDC and fail auth.
 
 ```mermaid
 flowchart LR
