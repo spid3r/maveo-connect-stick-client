@@ -67,10 +67,10 @@
   "devDependencies": {
     "@commitlint/cli": "^21.0.1",
     "@commitlint/config-conventional": "^21.0.1",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.1.1",
     "dotenv": "^17.4.2",
     "husky": "^9.1.7",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.7"
   }
 }
